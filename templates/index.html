@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터 분석</title>
+</head>
+<body>
+    <h1>데이터 분석</h1>
+
+    <form id="upload-form">
+        <label for="algorithm">알고리즘 선택:</label>
+        <select id="algorithm" name="algorithm">
+            <option value="random_forest">Random Forest</option>
+            <option value="kmeans">K-Means</option>
+        </select><br><br>
+
+        <input type="file" id="file-input" accept=".csv" required><br><br>
+        <button type="submit">데이터 분석</button>
+    </form>
+
+    <div id="result-container" style="display: none;">
+        <h2>분석 결과</h2>
+        <p id="accuracy-result"></p>
+        <div id="clustering-container" style="display: none;">
+            <h3>K-means Clustering 결과</h3>
+            <img id="clustering-chart" alt="K-means 클러스터링" style="width: 100%; max-width: 600px;">
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('file', document.getElementById('file-input').files[0]);
+            formData.append('algorithm', document.getElementById('algorithm').value);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                alert('파일 업로드 중 오류가 발생했습니다.');
+            }
+        });
+
+        function displayResults(data) {
+            const resultContainer = document.getElementById('result-container');
+            const accuracyResult = document.getElementById('accuracy-result');
+            const clusteringContainer = document.getElementById('clustering-container');
+            const clusteringChart = document.getElementById('clustering-chart');
+
+            resultContainer.style.display = 'block';
+            accuracyResult.textContent = `모델 정확도: ${data.accuracy}%`;
+
+            if (data.clustering_img) {
+                clusteringContainer.style.display = 'block';
+                clusteringChart.src = `data:image/png;base64,${data.clustering_img}`;
+            }
+        }
+    </script>
+</body>
+</html>
